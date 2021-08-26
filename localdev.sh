@@ -8,15 +8,18 @@ source $DIR/vars.sh
 
 echo "running tusd..."
 
-#AWS_ACCESS_KEY_ID=$ECS_USER_ID
-#AWS_SECRET_ACCESS_KEY=$ECS_SECRET_KEY
-#AWS_REGION=ca-central-1
+export AWS_ACCESS_KEY_ID
+export AWS_SECRET_ACCESS_KEY
+export AWS_REGION
 
-##  @note: we are sending -s3-object-prefix for future compatibility (supporting namespaces)
-##  which will be necessary if we want to support more than one instance of RDS
-
-docker run -p 1080:1080 "${TUSD_CONTAINER_IMAGE_LOCATION}:$GIT_REF" \
+docker run --name=$DOCKER_CONTAINER_NAME --rm \
+  -e AWS_ACCESS_KEY_ID \
+  -e AWS_SECRET_ACCESS_KEY \
+  -e AWS_REGION \
+  --network=host \
+  "${TUSD_CONTAINER_IMAGE_LOCATION}:$GIT_REF" \
   -s3-bucket="$ECS_BUCKET_NAME" \
   -s3-endpoint="$ECS_ENDPOINT" \
   -s3-part-size="$FILE_CHUNK_SIZE" \
-  -s3-object-prefix="$ECS_BUCKET_NAMESPACE"
+  -s3-object-prefix="$ECS_BUCKET_NAMESPACE" \
+  -hooks-http=http://$RESTSERVER_URL:$RESTSERVER_PORT/v$RESTSERVER_VERSION/assets/tusMessage
