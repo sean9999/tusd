@@ -7,24 +7,20 @@ LABEL maintainer="Sean Macdonald <sean.macdonald@rmp.uhn.ca>" \
     ca.uhn.techna.container="tusd" \
     ca.uhn.techna.role="tusd"
 
-# Copy in the git repo from the build context
-COPY . /go/src/github.com/sean9999/tusd/
+ENV REPO_LOCATION=github.com/sean9999/tusd
 
-# Create app directory
-WORKDIR /go/src/github.com/sean9999/tusd
+#   Copy source
+COPY . /go/src/$REPO_LOCATION
+WORKDIR /go/src/$REPO_LOCATION
 
-RUN apk add --no-cache \
-        git gcc libc-dev \
-    && go get -d -v ./... \
-    && version="$(git tag -l --points-at HEAD)" \
-    && commit=$(git log --format="%H" -n 1) \
-    && GOOS=linux GOARCH=amd64 go build \
-        -ldflags="-X github.com/tus/tusd/cmd/tusd/cli.VersionName=${version} -X github.com/tus/tusd/cmd/tusd/cli.GitCommit=${commit} -X 'github.com/tus/tusd/cmd/tusd/cli.BuildDate=$(date --utc)'" \
-        -o "/go/bin/tusd" ./cmd/tusd/main.go \
-    && rm -r /go/src/* \
-    && apk del git
+#   Build from source
+RUN apk add --no-cache gcc libc-dev
+ENV GOOS=linux GOARCH=amd64
+RUN go build \
+    -ldflags="-X github.com/tus/tusd/cmd/tusd/cli.VersionName=${BEAUTIFUL_BRANCH} -X github.com/tus/tusd/cmd/tusd/cli.GitCommit=${GIT_REF} -X 'github.com/tus/tusd/cmd/tusd/cli.BuildDate=$(date --utc)'" \
+    -o "/go/bin/tusd" ./cmd/tusd/main.go
 
-# start a new stage that copies in the binary built in the previous stage
+#   copy built binary to fresh container
 FROM alpine:3.13
 
 COPY --from=builder /go/bin/tusd /usr/local/bin/tusd
