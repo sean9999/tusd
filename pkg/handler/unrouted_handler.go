@@ -217,15 +217,16 @@ func (handler *UnroutedHandler) Middleware(h http.Handler) http.Handler {
 
 		header := w.Header()
 
-		var origin = handler.config.CorsOrigin
-		if origin == "" {
-			origin = r.Header.Get("Origin")
+		allowedOrigin := handler.config.CorsOrigin
+		if allowedOrigin == "" {
+			allowedOrigin = r.Header.Get("Origin")
+		} else {
+			header.Set("X-Torus-Allowed", allowedOrigin)
 		}
 
-		if origin != "" {
+		if allowedOrigin != "" {
 
-			header.Set("Access-Control-Allow-Origin", origin)
-			header.Set("Vary", "Origin")
+			header.Set("Access-Control-Allow-Origin", allowedOrigin)
 
 			if r.Method == "OPTIONS" {
 				// Preflight request
