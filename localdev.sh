@@ -22,4 +22,5 @@ docker run --name=$DOCKER_CONTAINER_NAME --rm \
   -s3-endpoint="$ECS_ENDPOINT" \
   -s3-part-size="$FILE_CHUNK_SIZE" \
   -s3-object-prefix="$ECS_BUCKET_NAMESPACE" \
-  -hooks-http=http://$RESTSERVER_URL:$RESTSERVER_PORT/v$RESTSERVER_VERSION/assets/tusMessage
+  -hooks-http=http://$RESTSERVER_URL:$RESTSERVER_PORT/v$RESTSERVER_VERSION/assets/tusMessage \
+  -cors-origin=http://localhost:4200
